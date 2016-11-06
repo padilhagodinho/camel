@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.example.cdi;
+package br.com.educamt.routes;
+
+import static org.apache.camel.model.rest.RestParamType.path;
 
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.cdi.ContextName;
 import org.apache.camel.model.rest.RestBindingMode;
 
-import static org.apache.camel.model.rest.RestParamType.body;
-import static org.apache.camel.model.rest.RestParamType.path;
+import br.com.educamt.model.Aluno;
+import br.com.educamt.model.Disciplina;
 
-/**
- * Define REST services using the Camel REST DSL
- */
-@ContextName("myCamel")
-public class UserRouteBuilder extends RouteBuilder {
+@ContextName("educaMt")
+public class EducaMtRouteBuilder extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {
@@ -43,12 +42,12 @@ public class UserRouteBuilder extends RouteBuilder {
             .contextPath("/").host("localhost").port(8080)
             // add swagger api-doc out of the box
             .apiContextPath("/api-doc")
-                .apiProperty("api.title", "User API").apiProperty("api.version", "1.2.3")
+                .apiProperty("api.title", "Educa MT").apiProperty("api.version", "1.0-Alpha")
                 // and enable CORS
                 .apiProperty("cors", "true");
 
         // this user REST service is json only
-        rest("/user").description("User rest service")
+        /*rest("/user").description("User rest service")
             .consumes("application/json").produces("application/json")
 
             .get("/{id}").description("Find user by id").outType(User.class)
@@ -63,7 +62,29 @@ public class UserRouteBuilder extends RouteBuilder {
 
             .get("/findAll").description("Find all users").outTypeList(User.class)
                 .responseMessage().code(200).message("All users").endResponseMessage()
-                .to("bean:userService?method=listUsers");
+                .to("bean:userService?method=listUsers");*/
+        
+        //Rest Service para Disciplina
+        rest("/disciplina").description("Disciplina rest service")
+        .consumes("application/json").produces("application/json")
+
+        .get("/{idProfessor}/disciplinasPorProfessor").description("Lista disciplinas por professor").outTypeList(Disciplina.class)
+            .param().name("idProfessor").type(path).description("O id do professor para listagem de disciplinas").dataType("integer").endParam()
+            .responseMessage().code(200).message("Lista de escolas do professor").endResponseMessage()
+            .to("bean:disciplinaService?method=listarDisciplinasPorProfessor(${header.idProfessor})");
+        
+        //Rest Service para Aluno
+        rest("/aluno").description("Aluno rest service")
+        .consumes("application/json").produces("application/json")
+        
+        .get("/buscarTodos").description("Lista todos os alunos da escola").outTypeList(Aluno.class)
+	        .responseMessage().code(200).message("Lista de todos os alunos da escola").endResponseMessage()
+	        .to("bean:alunoService?method=listarTodosAlunos()")
+        
+        .get("/{idResponsavel}/alunosPorResponsavel").description("Lista o(s) aluno(s) por responsável").outTypeList(Aluno.class)
+	    	.param().name("idResponsavel").type(path).description("O id do responsável para listagem de alunos").dataType("integer").endParam()
+	        .responseMessage().code(200).message("Lista de alunos por responsável").endResponseMessage()
+	        .to("bean:alunoService?method=listarAlunosPorResponsavel(${header.idResponsavel})");
     }
 
 }
